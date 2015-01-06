@@ -1,0 +1,42 @@
+{% extends "layout.html" %}
+{% block content %}
+    <script>
+        (function (angular) {
+            'use strict';
+            angular.module('userFrom', [])
+                    .config(['$httpProvider', function ($httpProvider) {
+                        $httpProvider.defaults.xsrfCookieName = 'csrftoken';
+                        $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
+                    }
+                    ])
+                    .controller('UserFormController', ['$scope', '$http', '$window', function ($scope, $http, $window) {
+                        $scope.submit = function () {
+                            $http.post('/', $scope.user).
+                                    success(function (data, status, headers, config) {
+                                        console.log(data);
+                                        $window.location.href = data.route;
+                                    }).
+                                    error(function (data, status, headers, config) {
+                                        // called asynchronously if an error occurs
+                                        // or server returns response with an error status.
+                                    });
+                        };
+                    }]);
+        })(window.angular);
+    </script>
+<div ng-app="userFrom">
+    <form method="post" name="credentials" ng-controller="UserFormController" ng-submit="submit()">
+        <p>
+            <label for="id_email">Email:</label>
+            <input id="id_email" name="email" type="email" ng-model="user.email" ng-required="true"></p>
+
+        <p>
+            <label for="id_password">Password:</label>
+            <input id="id_password" name="password" type="password" ng-model="user.password">
+        </p>
+        <input type="hidden" name="csrfmiddlewaretoken" value="X8K5xOQR9APfUVQS4QMgVHIqzTsaIr3h">
+        {% csrf_token %}
+        <button type="submit">Submit</button>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,7 @@
+Performing system checks...
+
+System check identified no issues (0 silenced).
+December 28, 2014 - 12:39:30
+Django version 1.7.1, using settings 'django_vk.settings'
+Starting development server at http://192.168.56.107:80/
+Quit the server with CONTROL-C.

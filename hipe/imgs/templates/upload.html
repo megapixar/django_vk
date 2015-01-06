@@ -1,0 +1,41 @@
+{% extends "layout.html" %}
+{% block content %}
+{#    {% verbatim %}#}
+{#    <p>1 + 2 = {{ 1 + 2 }}</p>#}
+{#    {% endverbatim %}#}
+
+    <script type="text/javascript">
+        (function () {
+            'use strict';
+            //(1)
+            var uploadApp = angular.module("uploadApp", [])
+                    .controller('UploadFormController', ['$scope', '$http', function ($scope, $http) {
+                        $scope.submit = function (e) {
+                            e.preventDefault();
+                            var formAction = angular.element(e.srcElement).attr('action');
+                            $http.jsonp(formAction, $scope.photo).
+                                    success(function (data, status, headers, config) {
+                                        console.log(12312);
+                                    }).
+                                    error(function (data, status, headers, config) {
+                                        // called asynchronously if an error occurs
+                                        // or server returns response with an error status.
+                                    });
+                            return false;
+                        };
+                    }]);
+        })(window.angular);
+    </script>
+
+    <div ng-app="uploadApp">
+        <form method="post" name="credentials" enctype="multipart/form-data" action="{{ upload_url }}"
+              ng-controller="UploadFormController" ng-submit="submit($event)">
+            <p><label for="id_photo">Photo:</label>
+                <input id="id_photo" name="photo" type="file" ng-model="photo" ng-required="true">
+            </p>
+            <button type="submit">Submit</button>
+        </form>
+    </div>
+    <iframe src="">
+    </iframe>
+{% endblock %}
