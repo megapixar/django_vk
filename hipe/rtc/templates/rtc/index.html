@@ -1,4 +1,295 @@
 {% extends "rtc/layout.html" %}
 {% block content %}
-    <input type="file" accept="video/*;capture=camcorder">
+    <style>
+    #answerButton {
+        margin-left: 60px;
+    }
+    </style>
+    <video autoplay id="localVideo"></video>
+    <video autoplay id="remoteVideo"></video>
+
+    <p><button id="startButton">Start</button><button id="answerButton">Answer</button></p>
+
+    <script src="//cdn.temasys.com.sg/adapterjs/latest/adapter.debug.js"></script>
+    <script src="//code.jquery.com/jquery-2.1.3.js"></script>
+    <script>
+{#        (function(){#}
+{#            var localVideo = document.getElementById('localVideo'),#}
+{#                remoteVideo = document.getElementById('remoteVideo'),#}
+{#                    startButton = document.getElementById('startButton'),#}
+{#                    answerButton = document.getElementById('answerButton');#}
+{##}
+{#            var localStream, pc1, pc2;#}
+{##}
+{#            startButton.onclick = start;#}
+{#            answerButton.onclick = call;#}
+{##}
+{#            function start() {#}
+{#                getUserMedia(#}
+{#                    {audio: true, video: true}, gotStream,#}
+{#                    function (e) {#}
+{#                        alert('getUserMedia() error: ' + e.name);#}
+{#                    }#}
+{#                );#}
+{#            }#}
+{##}
+{#            function gotStream(stream) {#}
+{#                // Call the polyfill wrapper to attach the media stream to this element.#}
+{#                attachMediaStream(localVideo, stream);#}
+{#                localStream = stream;#}
+{#                var videoTracks = localStream.getVideoTracks();#}
+{#                if (videoTracks.length > 0) {#}
+{#                    console.log('Using video device: ' + videoTracks[0].label);#}
+{#                }#}
+{#            }#}
+{##}
+{#            function getOtherPc(pc) {#}
+{#                return (pc === pc1) ? pc2 : pc1;#}
+{#            }#}
+{##}
+{#            function getNamePc(pc) {#}
+{#                return (pc === pc1) ? 'pc1' : 'pc2';#}
+{#            }#}
+{##}
+{#            function onIceCandidate(pc, event) {#}
+{#                if (event.candidate) {#}
+{#                    getOtherPc(pc).addIceCandidate(new RTCIceCandidate(event.candidate),#}
+{#                            function (pc) {#}
+{#                                console.log(getNamePc(pc) + ' addIceCandidate success');#}
+{#                            },#}
+{#                            function (pc, error) {#}
+{#                                console.log(getNamePc(pc) + ' failed to add ICE Candidate: ' + error.toString());#}
+{#                            });#}
+{#                    console.log(getNamePc(pc) + ' ICE candidate: \n' + event.candidate.candidate);#}
+{#                }#}
+{#            }#}
+{##}
+{#            function onIceStateChange(pc, event) {#}
+{#                if (pc) {#}
+{#                    console.log(getNamePc(pc) + ' ICE state: ' + pc.iceConnectionState);#}
+{#                    console.log('ICE state change event: ', event);#}
+{#                }#}
+{#            }#}
+{##}
+{#            function onCreateSessionDescriptionError(error) {#}
+{#                console.log('Failed to create session description: ' + error.toString());#}
+{#            }#}
+{##}
+{#            function onCreateOfferSuccess(desc) {#}
+{#                console.log('Offer from pc1\n' + desc.sdp);#}
+{##}
+{#                console.log('pc1 setLocalDescription start');#}
+{#                pc1.setLocalDescription(desc, function() {#}
+{#                    console.log(getNamePc(pc1) + ' setLocalDescription complete');#}
+{#                });#}
+{##}
+{#                console.log('pc2 setRemoteDescription start');#}
+{#                pc2.setRemoteDescription(desc, function() {#}
+{#                    console.log(getNamePc(pc2) + ' setRemoteDescription complete');#}
+{#                });#}
+{##}
+{#                console.log('pc2 createAnswer start');#}
+{#                // Since the 'remote' side has no media stream we need#}
+{#                // to pass in the right constraints in order for it to#}
+{#                // accept the incoming offer of audio and video.#}
+{#                pc2.createAnswer(onCreateAnswerSuccess, onCreateSessionDescriptionError,#}
+{#                        {#}
+{#                            'mandatory': {#}
+{#                                'OfferToReceiveAudio': true,#}
+{#                                'OfferToReceiveVideo': true#}
+{#                            }#}
+{#                        });#}
+{#            }#}
+{##}
+{#            function onCreateAnswerSuccess(desc) {#}
+{#                console.log('Answer from pc2:\n' + desc.sdp);#}
+{##}
+{#                console.log('pc2 setLocalDescription start');#}
+{#                pc2.setLocalDescription(desc, function() {#}
+{#                    console.log(getNamePc(pc2) + ' setLocalDescription complete');#}
+{#                });#}
+{##}
+{#                console.log('pc1 setRemoteDescription start');#}
+{#                pc1.setRemoteDescription(desc, function() {#}
+{#                    console.log(getNamePc(pc1) + ' setRemoteDescription complete');#}
+{#                });#}
+{#            }#}
+{##}
+{#            function call() {#}
+{#                var servers = null;#}
+{#                //pc 1#}
+{#                pc1 = new RTCPeerConnection(servers);#}
+{#                console.log('Created local peer connection object pc1');#}
+{#                pc1.onicecandidate = function(e) {#}
+{#                    onIceCandidate(pc1, e);#}
+{#                };#}
+{#                //pc 2#}
+{#                pc2 = new RTCPeerConnection(servers);#}
+{#                console.log('Created remote peer connection object pc2');#}
+{#                pc2.onicecandidate = function(e) {#}
+{#                    onIceCandidate(pc2, e);#}
+{#                };#}
+{##}
+{#                pc1.oniceconnectionstatechange = function(e) {#}
+{#                    onIceStateChange(pc1, e);#}
+{#                };#}
+{#                pc2.oniceconnectionstatechange = function(e) {#}
+{#                    onIceStateChange(pc2, e);#}
+{#                };#}
+{##}
+{#                pc2.onaddstream = function (e) {#}
+{#                    // Call the polyfill wrapper to attach the media stream to this element.#}
+{#                    attachMediaStream(remoteVideo, e.stream);#}
+{#                    console.log('pc2 received remote stream');#}
+{#                };#}
+{##}
+{#                pc1.addStream(localStream);#}
+{#                console.log('Added local stream to pc1');#}
+{##}
+{#                console.log('pc1 createOffer start');#}
+{#                pc1.createOffer(onCreateOfferSuccess, onCreateSessionDescriptionError)#}
+{#            }#}
+{##}
+{#    })();#}
+
+
+        (function () {
+            var localVideo = document.getElementById('localVideo'),
+                    remoteVideo = document.getElementById('remoteVideo'),
+                    callButton = document.getElementById('startButton'),
+                    answerButton = document.getElementById('answerButton'),
+                    peerc;
+
+            callButton.onclick = function (user) {
+                user = 'localUser';
+                getUserMedia({audio: false, video: true}, function (stream) {
+                    attachMediaStream(localVideo, stream);
+                    var pc = new RTCPeerConnection();
+                    pc.addStream(stream);
+                    pc.onAddStream = function(e){
+                        attachMediaStream(remoteVideo, e.stream);
+                    };
+
+                    pc.onicecandidate = function(event){
+                        if (event.candidate) {
+                            var timeout = setInterval(function(){
+                                jQuery.post(
+                                        "candidate/", {
+                                            candidate: JSON.stringify(event.candidate),
+                                            type : 'offer'
+                                        },
+                                        function (data) {
+                                            if(!$.isEmptyObject(data)){
+                                                pc.addIceCandidate(new RTCIceCandidate(data));
+                                                clearInterval(timeout);
+                                            }
+                                        }
+                                );
+                            }, 5000);
+                            pc.onicecandidate = null;
+                        } else {
+                            console.log("End of candidates.")
+                        }
+                    };
+                    pc.createOffer(function (offer) {
+                        pc.setLocalDescription(offer, function () {
+                            // Send offer to remote end.
+                            console.log("setLocalDescription, sending to remote");
+                            peerc = pc;
+                            jQuery.post(
+                                    "offer/", {
+                                        offer: JSON.stringify(offer)
+                                    },
+                                    function() {
+                                        console.log("Offer sent!");
+                                        var timeout = setInterval(function(){
+                                            jQuery.get(
+                                                    "get_answer/", {},
+                                                    function (answer) {
+                                                        if (!$.isEmptyObject(answer)) {
+                                                            pc.setRemoteDescription(new RTCSessionDescription(answer), function () {
+                                                                console.log("Call established!");
+                                                            }, error);
+                                                            clearInterval(timeout);
+                                                        }
+                                                    }
+                                            );
+                                        }, 5000);
+                                    }
+                            ).error(error);
+                        });
+                    });
+                },
+                error
+                );
+            };
+
+            answerButton.onclick = function (user) {
+                jQuery.get(
+                        "get_offer/", {},
+                        function (offer) {
+                            getUserMedia({audio: false, video: true}, function (stream) {
+                                attachMediaStream(localVideo, stream);
+                                var pc = new RTCPeerConnection();
+                                pc.addStream(stream);
+                                pc.onAddStream = function(e){
+                                    attachMediaStream(remoteVideo, e.stream);
+                                };
+
+                                pc.onicecandidate = function(event){
+                                    if (event.candidate) {
+{#                                        var timeout = setInterval(function(){#}
+                                            jQuery.post(
+                                                    "candidate/", {
+                                                        candidate: JSON.stringify(event.candidate),
+                                                        type : 'answer'
+                                                    },
+                                                    function (data) {
+                                                        if(!$.isEmptyObject(data)){
+                                                            pc.addIceCandidate(new RTCIceCandidate(data));
+{#                                                            clearInterval(timeout);#}
+                                                        }
+                                                    }
+                                            );
+{#                                        }, 5000);#}
+                                        pc.onicecandidate = null;
+                                    } else {
+                                        console.log("End of candidates.")
+                                    }
+                                };
+
+
+                                pc.setRemoteDescription(new RTCSessionDescription(offer), function() {
+                                    pc.createAnswer(function (answer) {
+                                        pc.setLocalDescription(answer, function () {
+                                            // Send offer to remote end.
+                                            console.log("setLocalDescription, sending to remote");
+                                            peerc = pc;
+                                            jQuery.post(
+                                                    "answer/", {
+                                                        answer: JSON.stringify(answer)
+                                                    },
+                                                    function() { console.log("Answer sent!"); }
+                                            ).error(error);
+                                        });
+                                    });
+                                }, error)
+
+                            }, error);
+                        }
+                ).error(error);
+
+            };
+
+            function error(e) {
+                if (typeof e == typeof {}) {
+                    alert("Oh no! " + JSON.stringify(e));
+                } else {
+                    alert("Oh no! " + e);
+                }
+                endCall();
+            }
+        })(document)
+    </script>
 {% endblock %}
+
