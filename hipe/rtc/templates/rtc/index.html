@@ -157,45 +157,67 @@
             var localVideo = document.getElementById('localVideo'),
                     remoteVideo = document.getElementById('remoteVideo'),
                     callButton = document.getElementById('startButton'),
-                    answerButton = document.getElementById('answerButton'),
-                    peerc;
+                    answerButton = document.getElementById('answerButton');
 
             callButton.onclick = function (user) {
                 user = 'localUser';
                 getUserMedia({audio: false, video: true}, function (stream) {
-                    attachMediaStream(localVideo, stream);
-                    var pc = new RTCPeerConnection();
-                    pc.addStream(stream);
-                    pc.onAddStream = function(e){
-                        attachMediaStream(remoteVideo, e.stream);
-                    };
+                            attachMediaStream(localVideo, stream);
+                            var pc = new RTCPeerConnection();
+                            pc.addStream(stream);
+                            pc.onAddStream = function (e) {
+                                if (!e) return;
+                                attachMediaStream(remoteVideo, e.stream);
+                                console.log('Remote video was added to Offer!');
+                            };
 
-                    pc.onicecandidate = function(event){
-                        if (event.candidate) {
-                            var timeout = setInterval(function(){
+                            var timeout = setInterval(function () {
                                 jQuery.post(
                                         "candidate/", {
-                                            candidate: JSON.stringify(event.candidate),
-                                            type : 'offer'
+                                            candidate: '',
+                                            type: 'offer'
                                         },
                                         function (data) {
-                                            if(!$.isEmptyObject(data)){
-                                                pc.addIceCandidate(new RTCIceCandidate(data));
-                                                clearInterval(timeout);
+                                            if (!$.isEmptyObject(data)) {
+                                                pc.addIceCandidate(new RTCIceCandidate(data), function (pc) {
+                                                    console.log('Offer addIceCandidate from answer');
+                                                }, function (pc, error) {
+                                                    console.log(error);
+                                                });
+                                                {#                                                clearInterval(timeout);#}
                                             }
                                         }
                                 );
-                            }, 5000);
-                            pc.onicecandidate = null;
-                        } else {
-                            console.log("End of candidates.")
-                        }
-                    };
+                            }, 1000);
+                            var num = 0;
+                            pc.onicecandidate = function (event) {
+                                if (event.candidate) {
+
+                                    jQuery.post(
+                                            "candidate/", {
+                                                candidate: JSON.stringify(event.candidate),
+                                                type: 'offer',
+                                                num : num++
+                                            },
+                                            function (data) {
+                                            }
+                                    );
+                                } else {
+{#                                    clearInterval(timeout);#}
+                                    console.log("End of candidates.")
+                                }
+                            };
+
+                            pc.oniceconnectionstatechange = function (e) {
+                                console.log('Offer ICE state: ' + pc.iceConnectionState);
+                            };
+
+
+
                     pc.createOffer(function (offer) {
                         pc.setLocalDescription(offer, function () {
                             // Send offer to remote end.
                             console.log("setLocalDescription, sending to remote");
-                            peerc = pc;
                             jQuery.post(
                                     "offer/", {
                                         offer: JSON.stringify(offer)
@@ -210,11 +232,11 @@
                                                             pc.setRemoteDescription(new RTCSessionDescription(answer), function () {
                                                                 console.log("Call established!");
                                                             }, error);
-                                                            clearInterval(timeout);
+{#                                                            clearInterval(timeout);#}
                                                         }
                                                     }
                                             );
-                                        }, 5000);
+                                        }, 1000);
                                     }
                             ).error(error);
                         });
@@ -232,39 +254,51 @@
                                 attachMediaStream(localVideo, stream);
                                 var pc = new RTCPeerConnection();
                                 pc.addStream(stream);
-                                pc.onAddStream = function(e){
+                                pc.onAddStream = function (e) {
+                                    if (!e) return;
+                                    console.log('Remote video was added to Answer!');
                                     attachMediaStream(remoteVideo, e.stream);
                                 };
 
+                                var timeout = setInterval(function () {
+                                    jQuery.post(
+                                            "candidate/", {
+                                                candidate: '',
+                                                type: 'answer'
+                                            },
+                                            function (data) {
+                                                if (!$.isEmptyObject(data)) {
+                                                    pc.addIceCandidate(new RTCIceCandidate(data), function () {
+                                                        console.log('Answer addIceCandidate from offer');
+                                                    }, function (pc, error) {
+                                                        console.log(error);
+                                                    });
+                                                }
+                                            }
+                                    );
+                                }, 1000);
+                                var num = 0;
                                 pc.onicecandidate = function(event){
                                     if (event.candidate) {
-{#                                        var timeout = setInterval(function(){#}
                                             jQuery.post(
                                                     "candidate/", {
                                                         candidate: JSON.stringify(event.candidate),
-                                                        type : 'answer'
+                                                        type : 'answer',
+                                                        num : num++
                                                     },
                                                     function (data) {
-                                                        if(!$.isEmptyObject(data)){
-                                                            pc.addIceCandidate(new RTCIceCandidate(data));
-{#                                                            clearInterval(timeout);#}
-                                                        }
                                                     }
                                             );
-{#                                        }, 5000);#}
-                                        pc.onicecandidate = null;
                                     } else {
                                         console.log("End of candidates.")
                                     }
                                 };
-
 
                                 pc.setRemoteDescription(new RTCSessionDescription(offer), function() {
                                     pc.createAnswer(function (answer) {
                                         pc.setLocalDescription(answer, function () {
                                             // Send offer to remote end.
                                             console.log("setLocalDescription, sending to remote");
-                                            peerc = pc;
                                             jQuery.post(
                                                     "answer/", {
                                                         answer: JSON.stringify(answer)
@@ -272,6 +306,13 @@
                                                     function() { console.log("Answer sent!"); }
                                             ).error(error);
                                         });
+                                    }, function (error) {
+                                        console.log('Failed to create session description: ' + error.toString());
+                                    }, {
+                                        'mandatory': {
+                                            'OfferToReceiveAudio': true,
+                                            'OfferToReceiveVideo': false
+                                        }
                                     });
                                 }, error)
 
