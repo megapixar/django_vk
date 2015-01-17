@@ -120,6 +120,8 @@
                         //pc 1
                         pc1 = new RTCPeerConnection(servers);
                         console.log('Created local peer connerunstion object pc1');
+                        pc1.addStream(localStream);
+                        console.log('Added local stream to pc1');
                         pc1.onicecandidate = function(e) {
                             onIceCandidate(pc1, e);
                         };
@@ -143,8 +145,7 @@
                             console.log('pc2 received remote stream');
                         };
 
-                        pc1.addStream(localStream);
-                        console.log('Added local stream to pc1');
+
 
                         console.log('pc1 createOffer start');
                         pc1.createOffer(onCreateOfferSuccess, onCreateSessionDescriptionError)
