@@ -18,13 +18,8 @@
                     remoteVideo = document.getElementById('remoteVideo'),
                     callButton = document.getElementById('startButton'),
                     answerButton = document.getElementById('answerButton'),
-                    servers = null,
-                    mandatory = {
-                        'mandatory': {
-                            'OfferToReceiveAudio': false,
-                            'OfferToReceiveVideo': false
-                        }
-                    };
+                    servers = null;
+
             callButton.onclick = function (user) {
                 user = 'localUser';
                 getUserMedia({audio: false, video: true}, function (stream) {
@@ -32,7 +27,6 @@
                             var pc = new RTCPeerConnection(servers);
                             pc.addStream(stream);
                             pc.onaddstream = function (e) {
-                                console.log(e);
                                 attachMediaStream(remoteVideo, e.stream);
                                 console.log('Remote video was added to Offer!');
                             };
@@ -102,7 +96,7 @@
                                     }
                             ).error(error);
                         });
-                    }, error, mandatory);
+                    }, error);
                 },
                 error
                 );
@@ -140,7 +134,7 @@
                                                 }
                                             }
                                     );
-                                }, 1000);
+                                }, 500);
 
                                 pc.onicecandidate = function(event){
                                     if (event.candidate) {
@@ -175,7 +169,7 @@
                                         });
                                     }, function (error) {
                                         console.log('Failed to create session description: ' + error.toString());
-                                    }, mandatory);
+                                    });
                                 }, error)
 
                             }, error);
