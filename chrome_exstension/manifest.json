@@ -1,0 +1,21 @@
+{
+  "name": "Full Page Screen Capture",
+  "version": "0.0.12",
+  "manifest_version": 2,
+  "description": "Screen capture your current page in entirety and reliably!",
+  "icons": {
+    "16": "icon.png",
+    "128": "icon.png"
+  },
+  "app": {
+    "background": {
+      "scripts": ["background.js"]
+    }
+  },
+  "permissions": [
+//    "http://*/",
+//    "webRequest",
+    "http://192.168.1.15:8000/",
+    "desktopCapture"
+  ]
+}

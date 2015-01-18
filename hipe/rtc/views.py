@@ -79,3 +79,8 @@ def candidate(request):
             break
 
     return JsonResponse(result)
+
+# Data Channel
+def datachannel(request):
+
+    return render(request, 'rtc/data_channel/index.html')

@@ -1,0 +1,106 @@
+{% extends "rtc/layout.html" %}
+{% block content %}
+    <style>
+        #answerButton {
+            margin-left: 60px;
+        }
+    </style>
+    <div id="receiver"></div>
+
+    <p><button id="getButton">Get</button></p>
+
+    <script src="//cdn.temasys.com.sg/adapterjs/latest/adapter.debug.js"></script>
+    <script src="//code.jquery.com/jquery-2.1.3.js"></script>
+    <script>
+        (function(){
+            var getButton = document.getElementById('getButton'),
+                    receiveChannel = null;
+
+            getButton.onclick = function (user) {
+                jQuery.get(
+                        "get_offer/", {},
+                        function (offer) {
+                            if ($.isEmptyObject(offer)) {
+                                return false;
+                            }
+                            console.log('Offer received ');
+                                var pc = new RTCPeerConnection(servers);
+                                pc.ondatachannel = function (event) {
+                                    console.log('Receive Channel Callback');
+                                    receiveChannel = event.channel;
+                                    receiveChannel.onmessage = function (event) {
+                                        console.log('Received Message');
+                                        $('#receiver').html(event.data);
+                                    };
+                                    receiveChannel.onopen = onReceiveChannelStateChange;
+                                    receiveChannel.onclose = onReceiveChannelStateChange;
+                                };
+                                var num = 0;
+                                var timeout = setInterval(function () {
+                                    jQuery.post(
+                                            "candidate/", {
+                                                candidate: '',
+                                                type: 'answer'
+                                            },
+                                            function (data) {
+                                                if (!$.isEmptyObject(data)) {
+                                                    pc.addIceCandidate(new RTCIceCandidate(data), function () {
+                                                        console.log('Answer addIceCandidate from offer');
+                                                    }, error);
+                                                }
+                                            }
+                                    );
+                                }, 500);
+
+                                pc.onicecandidate = function(event){
+                                    if (event.candidate) {
+                                        jQuery.post(
+                                                "candidate/", {
+                                                    candidate: JSON.stringify(event.candidate),
+                                                    type : 'answer',
+                                                    num : num++
+                                                },
+                                                function (data) {
+                                                }
+                                        );
+                                    } else {
+                                        console.log("End of candidates.")
+                                    }
+                                };
+                                pc.oniceconnectionstatechange = function (e) {
+                                    console.log('Answer ICE state: ' + pc.iceConnectionState);
+                                };
+
+                                pc.setRemoteDescription(new RTCSessionDescription(offer), function() {
+                                    console.log("Answer set Remote Description!");
+                                    pc.createAnswer(function (answer) {
+                                        pc.setLocalDescription(answer, function () {
+                                            // Send offer to remote end.
+                                            jQuery.post(
+                                                    "answer/", {
+                                                        answer: JSON.stringify(answer)
+                                                    },
+                                                    function() { console.log("Answer sent!"); }
+                                            ).error(error);
+                                        });
+                                    }, function (error) {
+                                        console.log('Failed to create session description: ' + error.toString());
+                                    });
+                                }, error)
+
+                        }
+                ).error(error);
+
+            };
+
+            function error(e) {
+                if (typeof e == typeof {}) {
+                    alert("Oh no! " + JSON.stringify(e));
+                } else {
+                    alert("Oh no! " + e);
+                }
+                endCall();
+            }
+        })();
+    </script>
+{% endblock %}

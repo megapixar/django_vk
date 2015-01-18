@@ -110,12 +110,13 @@
                                 return false;
                             }
                             console.log('Offer received ');
-                            getUserMedia({audio: false, video: true}, function (stream) {
-                                attachMediaStream(localVideo, stream);
+{#                            getUserMedia({audio: false, video: true}, function (stream) {#}
+{#                                attachMediaStream(localVideo, stream);#}
                                 var pc = new RTCPeerConnection(servers);
-                                pc.addStream(stream);
+{#                                pc.addStream(stream);#}
                                 pc.onaddstream = function (e) {
                                     console.log('Remote video was added to Answer!');
+                                    console.log(e.stream);
                                     attachMediaStream(remoteVideo, e.stream);
                                 };
 
@@ -172,7 +173,7 @@
                                     });
                                 }, error)
 
-                            }, error);
+{#                            }, error);#}
                         }
                 ).error(error);
 
